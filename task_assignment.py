@@ -1,38 +1,46 @@
+# Importamos NumPy para operaciones matriciales eficientes
 import numpy as np
 
 class TaskAssignmentOptimizer:
     """
-    Clase para optimizar la asignación de tareas entre programadores.
+    Clase para optimizar la asignación de tareas entre programadores utilizando el Algoritmo Húngaro.
+    Permite minimizar o maximizar el tiempo/costo de asignación de tareas.
     """
 
     def __init__(self):
-        # Matriz de costos o tiempos
-        self.matrix = None
-        # Número de programadores y tareas
-        self.num_programmers = 0
-        self.num_tasks = 0
-        # Criterio de optimización ('1' para Tiempo, '2' para Costo)
-        self.criterio = '1'  # Valor por defecto
+        # Inicialización de variables para almacenar la matriz de asignación
+        self.matrix = None  # Matriz de costos/tiempos
+        self.num_programmers = 0  # Número de programadores
+        self.num_tasks = 0  # Número de tareas
+        self.criterio = '1'  # Criterio de optimización por defecto (minimizar)
 
     def get_user_matrix(self):
         """
-        Solicita al usuario ingresar la matriz de costos o tiempos.
+        Solicita al usuario ingresar la matriz de costos o tiempos de manera interactiva.
+        Valida que los datos ingresados sean numéricos y no negativos.
+        
+        Returns:
+            bool: True si la matriz se ingresó correctamente, False en caso contrario
         """
         try:
+            # Solicitar número de programadores y tareas
             self.num_programmers = int(input("Ingrese el número de programadores: "))
             self.num_tasks = int(input("Ingrese el número de tareas: "))
 
+            # Validar que los números sean positivos
             if self.num_programmers <= 0 or self.num_tasks <= 0:
                 print("El número de programadores y tareas debe ser mayor a cero.")
                 return False
 
             self.matrix = []
 
+            # Ingresar valores de la matriz de manera interactiva
             print("\nIngrese los valores de la matriz:")
             for i in range(self.num_programmers):
                 row = []
                 print(f"\nProgramador {i+1}:")
                 for j in range(self.num_tasks):
+                    # Validar que los valores sean numéricos y no negativos
                     while True:
                         try:
                             value = float(input(f"Costo/Tiempo para la tarea {j+1}: "))
@@ -45,7 +53,7 @@ class TaskAssignmentOptimizer:
                             print("Entrada inválida. Ingrese un número.")
                 self.matrix.append(row)
             
-            # Convertimos la matriz a un numpy array
+            # Convertir la matriz a un array de NumPy
             self.matrix = np.array(self.matrix)
             return True
         except ValueError:
@@ -54,7 +62,13 @@ class TaskAssignmentOptimizer:
 
     def validate_matrix(self):
         """
-        Valida que la matriz esté correctamente formada y que los datos sean consistentes.
+        Valida que la matriz esté correctamente formada:
+        - No esté vacía
+        - Tenga las dimensiones correctas
+        - No contenga valores negativos
+        
+        Returns:
+            bool: True si la matriz es válida, False en caso contrario
         """
         if not isinstance(self.matrix, np.ndarray) or self.matrix.size == 0:
             print("Error: La matriz no puede estar vacía.")
@@ -73,37 +87,46 @@ class TaskAssignmentOptimizer:
     def balance_matrix(self):
         """
         Balancea la matriz agregando filas o columnas ficticias si es necesario.
+        Esto es útil cuando el número de programadores no es igual al número de tareas.
         """
         rows, cols = self.matrix.shape
         if rows == cols:
             return
+        
+        # Determinar la dimensión máxima
         max_dim = max(rows, cols)
-        # Usamos un valor grande para las posiciones ficticias
+        
+        # Crear un valor de relleno mayor que cualquier valor existente
         fill_value = np.max(self.matrix) * 10 + 1
         balanced_matrix = np.full((max_dim, max_dim), fill_value=fill_value)
 
-        # Copiamos los valores originales
+        # Copiar la matriz original a la matriz balanceada
         balanced_matrix[:rows, :cols] = self.matrix
         self.matrix = balanced_matrix
         self.num_programmers = self.num_tasks = max_dim
 
     def subtract_row_minima(self):
         """
-        Restamos el mínimo de cada fila a todos los elementos de esa fila.
+        Resta el valor mínimo de cada fila a todos los elementos de esa fila.
+        Parte del proceso de reducción de la matriz en el Algoritmo Húngaro.
         """
         row_minima = np.min(self.matrix, axis=1)
         self.matrix -= row_minima[:, np.newaxis]
 
     def subtract_column_minima(self):
         """
-        Restamos el mínimo de cada columna a todos los elementos de esa columna.
+        Resta el valor mínimo de cada columna a todos los elementos de esa columna.
+        Parte del proceso de reducción de la matriz en el Algoritmo Húngaro.
         """
         col_minima = np.min(self.matrix, axis=0)
         self.matrix -= col_minima
 
     def find_optimal_assignment_manual(self):
         """
-        Encuentra una asignación óptima utilizando el Algoritmo Húngaro manualmente.
+        Implementación manual del Algoritmo Húngaro para encontrar la asignación óptima.
+        
+        Returns:
+            tuple: Una tupla con la solución de asignación y el costo total
         """
         n = self.num_programmers
         # Paso 1: Restar los mínimos de filas y columnas
@@ -212,19 +235,23 @@ class TaskAssignmentOptimizer:
 
     def find_optimal_assignment_library(self):
         """
-        Encuentra una asignación óptima utilizando la librería SciPy.
+        Encuentra una asignación óptima utilizando la función linear_sum_assignment de SciPy.
+        
+        Returns:
+            tuple: Una tupla con la solución de asignación y el costo total
         """
         try:
+            # Importar la función de asignación lineal de SciPy
             from scipy.optimize import linear_sum_assignment
         except ImportError:
             print("La librería 'scipy' no está instalada. Por favor, instálala usando 'pip install scipy'.")
             return None
 
-        # Asegurarse de que la matriz esté balanceada
+        # Balancear la matriz si es necesario
         if self.num_programmers != self.num_tasks:
             self.balance_matrix()
 
-        # Utilizar la función linear_sum_assignment
+        # Usar la función de asignación lineal
         row_ind, col_ind = linear_sum_assignment(self.matrix)
         total_cost = 0
         solution = []
@@ -237,26 +264,30 @@ class TaskAssignmentOptimizer:
 
     def optimize_assignment(self, method='manual'):
         """
-        Optimiza la asignación de tareas según el método seleccionado.
+        Optimiza la asignación de tareas según el método y criterio seleccionados.
+        
+        Args:
+            method (str): Método de resolución ('manual' o 'munkres')
         """
+        # Validar la matriz antes de optimizar
         if not self.validate_matrix():
             return
 
+        # Guardar una copia de la matriz original
         self.original_matrix = np.copy(self.matrix)
 
-        # Modificar la matriz según el criterio seleccionado
+        # Manejar diferentes criterios de optimización
         if self.criterio == '1':
             print("\nOptimizando Tiempo (Minimizando)...")
-            # No se requiere ninguna modificación adicional
         elif self.criterio == '2':
             print("\nOptimizando Costo (Maximizando)...")
-            # Convertir el problema de maximización en minimización
+            # Transformar el problema de maximización a minimización
             max_value = np.max(self.matrix)
             self.matrix = max_value - self.matrix
         else:
             print("\nSelección inválida. Se asumirá minimización del Tiempo.")
-            # Se asume minimización
 
+        # Seleccionar método de resolución
         if method == 'manual':
             result = self.find_optimal_assignment_manual()
         elif method == 'munkres':
@@ -270,13 +301,14 @@ class TaskAssignmentOptimizer:
 
         solution, total_cost = result
 
-        # Si invertimos la matriz para maximizar, recalculamos el costo total correctamente
+        # Ajustar el costo total para el caso de maximización
         if self.criterio == '2':
             total_cost = 0
             for programmer, task in solution:
                 if programmer < self.original_matrix.shape[0] and task < self.original_matrix.shape[1]:
                     total_cost += self.original_matrix[programmer, task]
 
+        # Mostrar resultados
         print("\nAsignación óptima:")
         for programmer, task in solution:
             if programmer < self.original_matrix.shape[0] and task < self.original_matrix.shape[1]:
@@ -284,24 +316,33 @@ class TaskAssignmentOptimizer:
         print(f"\nCosto total: {total_cost}")
 
 def main():
+    """
+    Función principal que maneja la interacción con el usuario y la optimización de tareas.
+    """
+    # Crear una instancia del optimizador
     optimizer = TaskAssignmentOptimizer()
 
+    # Obtener la matriz de entrada del usuario
     if not optimizer.get_user_matrix():
         return
 
+    # Seleccionar criterio de optimización
     print("\nSeleccione el criterio de optimización:")
     print("1. Tiempo (Minimizar)")
     print("2. Costo (Maximizar)")
     criterio = input("Ingrese su elección (1/2): ")
-    optimizer.criterio = criterio  # Guardamos la elección en el objeto
+    optimizer.criterio = criterio  
 
+    # Seleccionar método de resolución
     print("\nSeleccione el método de resolución:")
     print("1. Usar la librería Munkres")
     print("2. Resolver sin librerías")
     method_choice = input("Ingrese su elección (1/2): ")
 
+    # Determinar el método de resolución
     method = 'munkres' if method_choice == '1' else 'manual'
     optimizer.optimize_assignment(method)
 
 if __name__ == "__main__":
+    # Punto de entrada del script
     main()
