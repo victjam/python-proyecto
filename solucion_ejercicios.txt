@@ -1,0 +1,26 @@
+EJERCICIO 2
+
+=== Solución Primal ===
+x1 = 0.25
+x2 = 0.50
+x3 = 0.00
+Valor óptimo Z (mínimo): 100.00
+
+=== Solución Dual ===
+y1 = 50.00
+y2 = 50.00
+Valor óptimo W (máximo): 100.00
+
+
+EJERCICIO 3
+
+=== Solución Primal ===
+x1 (arreglos del tipo 1): 60.00
+x2 (arreglos del tipo 2): 50.00
+Valor óptimo Z (ingresos máximos): 4700.00
+
+=== Solución Dual ===
+y1 (precio sombra de las rosas): 3.00
+y2 (precio sombra de los tulipanes): 5.00
+y3 (precio sombra de los hibiscos): 0.00
+Valor óptimo W (costo mínimo): 4700.00
